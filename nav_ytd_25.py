@@ -156,6 +156,86 @@ clients_served = len(df)
 clients_served = str(clients_served)
 # # print('Patients Served This Month:', patients_served)
 
+# Create a 'Month' column with full month names
+df['Month'] = df['Date of Activity'].dt.strftime('%B')
+
+# Optional: If you want months in chronological order (Jan to Dec), create a 'Month_Num'
+df['Month_Num'] = df['Date of Activity'].dt.month
+
+# Step 2: Create fiscal year month order (Oct to Sep)
+month_order = [
+    
+    'September', 'August', 'July',
+    'June', 'May', 'April',
+    'March', 'February', 'January',
+    'December', 'November', 'October',
+]
+
+# Step 3: Convert Month to categorical to enforce order
+df['Month'] = pd.Categorical(df['Month'], categories=month_order, ordered=True)
+
+# Group by month name and number (to preserve order)
+monthly_clients = (
+    df.groupby('Month', observed=True) # Group by month
+    .size() # Count the number of entries per month
+    .reset_index(name='Clients_Served') # Reset index to convert Series to DataFrame
+    .sort_values('Month') # Sort by month order
+)
+
+print("Monthly Clients Served: \n", monthly_clients)
+
+# Plot horizontal bar chart
+clients_bar = px.bar(
+    data_frame=monthly_clients,
+    x='Clients_Served',
+    y='Month',
+    orientation='h',
+    text='Clients_Served',
+    color='Month',
+    # color_discrete_sequence=['#1f77b4']
+).update_layout(
+    height=700,
+    width=1200,
+    title=dict(
+        text='Clients Served by Month',
+        x=0.5,
+        font=dict(size=25, family='Calibri', color='black')
+    ),
+    font=dict(family='Calibri', size=18, color='black'),
+    xaxis=dict(
+        title=dict(text='Number of Clients', font=dict(size=20)),
+        tickfont=dict(size=18)
+    ),
+    yaxis=dict(
+        title='Month',
+        tickfont=dict(size=18),
+        autorange='reversed'  # optional: most recent month at top
+    ),
+    hovermode='closest',
+    bargap=0.2,
+    bargroupgap=0
+).update_traces(
+    textposition='auto',
+    hovertemplate='<b>Clients Served:</b> %{x}<extra></extra>'
+)
+
+# Pie chart showing values and percentages:
+clients_pie = px.pie(
+    data_frame=monthly_clients,
+    names='Month',
+    values='Clients_Served',
+).update_layout(
+    height=700,
+    width=1200,
+    title='Clients Served by Month',
+    title_x=0.5,
+    font=dict(family='Calibri', size=17, color='black')
+).update_traces(
+    rotation=200,
+    texttemplate='%{value}<br>(%{percent:.2%})',
+    hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
+)
+
 # ------------------------------ Navigation Hours ---------------------------- #
 
 # print("Activity Duration Unique: \n", df['Activity Duration'].unique().tolist())
@@ -588,13 +668,13 @@ df_insurance = df.groupby("Insurance").size().reset_index(name='Count')
 # Insurance Status Bar Chart
 insurance_bar=px.bar(
     df_insurance,
-    x="Insurance",
-    y='Count',
+    x="Count",
+    y='Insurance',
     color="Insurance",
     text='Count',
 ).update_layout(
     height=700, 
-    width=1000,
+    width=1100,
     title=dict(
         text='Insurance Status Bar Chart',
         x=0.5, 
@@ -659,7 +739,7 @@ insurance_pie=px.pie(
         color='black'
     )
 ).update_traces(
-    rotation=150,
+    rotation=145,
     # textinfo='value+percent',
     texttemplate='%{value}<br>(%{percent:.2%})',
     hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
@@ -697,58 +777,97 @@ location_categories = [
 df['Location'] = (
     df['Location']
     .str.strip()
-    .replace({
-        "" : "No Location",
-        
-        # Terrazas Public Library
-        "Terrazas Branch Library": "Terrazas Public Library",
-        "Terrezas public Library" : "Terrazas Public Library",
-        "Terreaz Public Library" : "Terrazas Public Library",
-        
-        # Phone
-        "Phone call" : "Phone Call",
-        "via zoom": "Phone Call",
-        "Phone appt" : "Phone Call",
-        "over the phone" : "Phone Call",
-        "over phone" : "Phone Call",
-        "Phone call and visit to 290/35 area where unhoused": "Phone Call",
-        
-        # Integral Care
-        "phone call/Integral care St John location" : "Integral Care - St. John",
-        "integral Care- St. John Location" : "Integral Care - St. John",
-        "last known area was St. John. Connected with Hungry Hill to help me search for client" : "Integral Care - St. John",
-        
-        # Austin Transitional Center
-        "Austin transitional Center" : "Austin Transitional Center",
-        "Austin Transistional Center" : "Austin Transitional Center",
-        "Austin Transitional center" : "Austin Transitional Center",
-        "ATC" : "Austin Transitional Center",
-        
-        # Extended Stay America
-        "EXTENDED STAY AMERICA" : "Extended Stay America",
-        
-        # Capital Villas (not in category list)
-        "capital villas apartments" : "Capital Villas Apartments",
-        
-        # Social Security Office & DPS (not in allowed categories, could be grouped or ignored)
-        'ICare and social security office' : "Social Security Office",
-        'Social Security office' : "Social Security Office",
-        'social security office and DPS (NORTH LAMAR)': "Social Security Office",
-        'DPS Meeting (pflugerville locations)': "Social Security Office",
-        
-        # South Bridge
-        "met client at southbridge to complete check in and discussed what options we had for us to be able to obtain missing vital docs" : "South Bridge",
-        
-        # Encampment Area
-        "picking client up from encampment, vital statics appointment and walk in at social security office, then returning client back to encampment area" : "Encampment Area",
+.replace({
+    # Already handled ones (repeating for context)
+    "" : "No Location",
 
-        # Other unclear entries
-        "Nice project riverside and Montopolis": "Event",
-    })
+    "Terrazas Branch Library": "Terrazas Public Library",
+    "Terrezas public Library": "Terrazas Public Library",
+    "Terreaz Public Library": "Terrazas Public Library",
+    "Terrazas library": "Terrazas Public Library",
+    "Terrazas Library": "Terrazas Public Library",
+
+    "Phone call": "Phone Call",
+    "via zoom": "Phone Call",
+    "Phone appt": "Phone Call",
+    "over the phone": "Phone Call",
+    "over phone": "Phone Call",
+    "Phone call and visit to 290/35 area where unhoused": "Phone Call",
+    "PHONE CONTACT": "Phone Call",
+    "PHONE": "Phone Call",
+    "phone": "Phone Call",
+    "phone call": "Phone Call",
+
+    "phone call/Integral care St John location": "Integral Care - St. John",
+    "integral Care- St. John Location": "Integral Care - St. John",
+    "last known area was St. John. Connected with Hungry Hill to help me search for client": "Integral Care - St. John",
+    "Integral Care St. John Office": "Integral Care - St. John",
+
+    "Austin transitional Center": "Austin Transitional Center",
+    "Austin Transistional Center": "Austin Transitional Center",
+    "Austin Transitional center": "Austin Transitional Center",
+    "ATC": "Austin Transitional Center",
+
+    "EXTENDED STAY AMERICA": "Extended Stay America",
+    "Extended Stay America (Host Hotel)": "Extended Stay America",
+    "Extended Stay America Hotel": "Extended Stay America",
+
+    "capital villas apartments": "Capital Villas Apartments",
+    "Capital Villas Apartments": "Capital Villas Apartments",
+
+    'ICare and social security office': "Social Security Office",
+    'Social Security office': "Social Security Office",
+    'social security office and DPS (NORTH LAMAR)': "Social Security Office",
+    'DPS Meeting (pflugerville locations)': "Social Security Office",
+    'Social Security Administration office': "Social Security Office",
+
+    "met client at southbridge to complete check in and discussed what options we had for us to be able to obtain missing vital docs": "South Bridge",
+    "Southbridge": "South Bridge",
+    "SouthBridge": "South Bridge",
+
+    "picking client up from encampment, vital statics appointment and walk in at social security office, then returning client back to encampment area": "Encampment Area",
+    "picked client up from encampment for SSA appointment": "Encampment Area",
+
+    "Nice project riverside and Montopolis": "Event",
+    "St. John’s Health Fair": "Event",
+    "Community Outreach": "Event",
+
+    "Hybrid Meeting": "Remote Meeting",
+    "Office (remote)": "Remote Meeting",
+
+    "Outreach in the field": "Outreach",
+    "Outreach": "Outreach",
+    "out in field": "Outreach",
+
+    "Deep in the trenches": "Field Visit",
+
+    # Fix similar locations
+    "The Bumgalows": "The Bungalows",
+    "The Bungalows": "The Bungalows",
+
+    "Cross creek hospital": "Cross Creek Hospital",
+    "Cross Creek hospital": "Cross Creek Hospital",
+
+    "Round Rock library": "Round Rock Library",
+    "Pflugerville library /on the phone after leaving client": "Pflugerville Library / Phone Call",
+    "Pflugerville library/Phone call": "Pflugerville Library / Phone Call",
+
+    "Clients home": "Client's Home",
+    "Clients home": "Client's Home",
+    "Home of resident": "Client's Home",
+
+    "Vivent Health": "Vivent Health",
+    "Trinity Center": "Trinity Center",
+    "ESPERO": "ESPERO",
+    "Austin Library": "Austin Library",
+    "Marshalling yard purc": "Marshalling Yard",
+    "Transitions of Care": "Transitions of Care",
+    "Hungry Hill/Austin Urban League": "Hungry Hill / Austin Urban League",
+})
 )
 
 location_unexpected = df[~df['Location'].isin(location_categories)]
-# print("Location Unexpected: \n", location_unexpected['Location'].unique().tolist())
+print("Location Unexpected: \n", location_unexpected['Location'].unique().tolist())
 
 df_location = df['Location'].value_counts().reset_index(name='Count')
 # # print(df['Location Encountered:'].value_counts())
@@ -761,7 +880,7 @@ location_bar=px.bar(
     color="Location",
     text='Count',
 ).update_layout(
-    height=900, 
+    height=1100, 
     width=2000,
     title=dict(
         text='Location Encountered Bar Chart',
@@ -1247,24 +1366,27 @@ zip_fig =px.bar(
     xaxis_title='Residents',
     yaxis_title='Zip Code',
     title_x=0.5,
-    height=1500,
+    height=2300,
     width=1500,
     font=dict(
         family='Calibri',
         size=17,
         color='black'
     ),
-        yaxis=dict(
+    yaxis=dict(
         tickangle=0  # Keep y-axis labels horizontal for readability
     ),
-        legend=dict(
+    xaxis=dict(
+        tickfont=dict(size=20),  # Font size for x-axis labels
+    ),
+    legend=dict(
         title='ZIP Code',
         orientation="v",  # Vertical legend
         x=1.05,  # Position legend to the right
         xanchor="left",  # Anchor legend to the left
         y=1,  # Position legend at the top
         yanchor="top"  # Anchor legend at the top
-    ),
+    )
 ).update_traces(
     textposition='auto',  # Place text labels inside the bars
     textfont=dict(size=30),  # Increase text size in each bar
@@ -1297,7 +1419,7 @@ zip_pie = px.pie(
 
 # =============================== Folium ========================== #
 
-empty_strings = df[df['ZIP Code:'].str.strip() == ""]
+# empty_strings = df[df['ZIP Code:'].str.strip() == ""]
 # print("Empty strings: \n", empty_strings.iloc[:, 10:12])
 
 # Filter df to exclued all rows where there is no value for "ZIP Code:"
@@ -1533,10 +1655,10 @@ app.layout = html.Div(
             className='divv', 
             children=[ 
             html.H1(
-                'Client Navigation Impact Report', 
+                'Client Navigation FY 2025 Report', 
                 className='title'),
             html.H1(
-                f'{report_year}', 
+                f'Oct 2024 - Sep {report_year}', 
                 className='title2'),
             html.Div(
                 className='btn-box', 
@@ -1678,6 +1800,29 @@ html.Div(
                 ),
             ],
         ),
+    ]
+),
+
+# # ROW 3
+html.Div(
+    className='row2',
+    children=[
+        html.Div(
+            className='graph3',
+            children=[
+                dcc.Graph(
+                    figure=clients_bar
+                )
+            ]
+        ),
+        html.Div(
+            className='graph4',
+            children=[
+                dcc.Graph(
+                    figure=clients_pie
+                )
+            ]
+        )
     ]
 ),
 
@@ -1880,7 +2025,7 @@ html.Div(
     className='row4',
     children=[
         html.Div(
-            className='graph5',
+            className='zip_graph',
             children=[
                 dcc.Graph(
                     figure=zip_fig
@@ -1919,7 +2064,7 @@ html.Div(
                 html.Iframe(
                     className='folium',
                     id='folium-map',
-                    srcDoc=map_html
+                    # srcDoc=map_html
                 )
             ]
         )
