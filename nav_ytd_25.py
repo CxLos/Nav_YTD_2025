@@ -182,7 +182,7 @@ monthly_clients = (
     .sort_values('Month') # Sort by month order
 )
 
-print("Monthly Clients Served: \n", monthly_clients)
+# print("Monthly Clients Served: \n", monthly_clients)
 
 # Plot horizontal bar chart
 clients_bar = px.bar(
@@ -195,7 +195,7 @@ clients_bar = px.bar(
     # color_discrete_sequence=['#1f77b4']
 ).update_layout(
     height=700,
-    width=1200,
+    width=900,
     title=dict(
         text='Clients Served by Month',
         x=0.5,
@@ -674,7 +674,7 @@ insurance_bar=px.bar(
     text='Count',
 ).update_layout(
     height=700, 
-    width=1100,
+    width=900,
     title=dict(
         text='Insurance Status Bar Chart',
         x=0.5, 
@@ -867,7 +867,7 @@ df['Location'] = (
 )
 
 location_unexpected = df[~df['Location'].isin(location_categories)]
-print("Location Unexpected: \n", location_unexpected['Location'].unique().tolist())
+# print("Location Unexpected: \n", location_unexpected['Location'].unique().tolist())
 
 df_location = df['Location'].value_counts().reset_index(name='Count')
 # # print(df['Location Encountered:'].value_counts())
