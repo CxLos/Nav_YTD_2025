@@ -69,9 +69,10 @@ df.columns = df.columns.str.strip()
 
 # Filtered df where 'Date of Activity:' is between October 1, 2024 to September 30, 2025
 df['Date of Activity'] = pd.to_datetime(df['Date of Activity'], format='%m/%d/%Y', errors='coerce')
-df = df[(df['Date of Activity'] >= '2024-10-01') & (df['Date of Activity'] <= '2025-09-30')]
+df = df[(df['Date of Activity'] >= '2024-10-01') & (df['Date of Activity'] <= '2025-07-31')]
 
 # Get the reporting month:
+current_month = datetime(2025, 7, 1).strftime("%B")
 report_year = datetime(2025, 1, 1).year
 
 # Strip whitespace
@@ -226,14 +227,14 @@ clients_pie = px.pie(
     values='Clients_Served',
 ).update_layout(
     height=700,
-    width=1200,
+    width=900,
     title='Clients Served by Month',
     title_x=0.5,
     font=dict(family='Calibri', size=17, color='black')
 ).update_traces(
     rotation=200,
     texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
+    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
 )
 
 # ------------------------------ Navigation Hours ---------------------------- #
@@ -367,7 +368,7 @@ race_pie=px.pie(
 ).update_traces(
     # textinfo='value+percent',
     texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
+    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
 )
 
 # ------------------------------- Gender Distribution ---------------------------- #
@@ -472,59 +473,53 @@ gender_pie=px.pie(
 ).update_traces(
     # textinfo='value+percent',
     texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='<b>%{label} Visits</b>: %{value}<extra></extra>'
+    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
 )
 
 # ------------------------------- Age Distribution ---------------------------- #
 
-# # Fill missing values for 'Birthdate' with random dates within a specified range
+# Fill missing values for 'Birthdate' with random dates within a specified range
 def random_date(start, end):
     return start + timedelta(days=np.random.randint(0, (end - start).days))
 
 start_date = datetime(1950, 1, 1) # Example: start date, e.g., 1950-01-01
 end_date = datetime(2000, 12, 31)
 
-def random_date(start, end):
-    return start + timedelta(days=np.random.randint(0, (end - start).days))
-
-# # Define the date range for random dates
-start_date = datetime(1950, 1, 1)
-end_date = datetime(2000, 12, 31)
-
-# # Convert 'Individual's Date of Birth:' to datetime, coercing errors to NaT
+# Convert 'Individual's Date of Birth:' to datetime, coercing errors to NaT
 df['Individual\'s Date of Birth:'] = pd.to_datetime(df['Individual\'s Date of Birth:'], errors='coerce')
 
-# # Fill missing values in 'Individual's Date of Birth:' with random dates
+# Fill missing values in 'Individual's Date of Birth:' with random dates
 df['Individual\'s Date of Birth:'] = df['Individual\'s Date of Birth:'].apply(
     lambda x: random_date(start_date, end_date) if pd.isna(x) else x
 )
 
-# # Calculate 'Client Age' by subtracting the birth year from the current year
+# exclude na values
+# df = df[df['Individual\'s Date of Birth:'].notna()]
+
+df['Individual\'s Date of Birth:'] = df['Individual\'s Date of Birth:'].fillna("N/A")
+
+# Calculate 'Client Age' by subtracting the birth year from the current year
 df['Client Age'] = pd.to_datetime('today').year - df['Individual\'s Date of Birth:'].dt.year
 
-# # Handle NaT values in 'Client Age' if necessary (e.g., fill with a default value or drop rows)
+# Handle NaT values in 'Client Age' if necessary (e.g., fill with a default value or drop rows)
 df['Client Age'] = df['Client Age'].apply(lambda x: "N/A" if x < 0 else x)
 
-# # Define a function to categorize ages into age groups
+# Define a function to categorize ages into age groups
 def categorize_age(age):
     if age == "N/A":
         return "N/A"
-    elif 10 <= age <= 19:
-        return '10-19'
-    elif 20 <= age <= 29:
-        return '20-29'
-    elif 30 <= age <= 39:
-        return '30-39'
-    elif 40 <= age <= 49:
-        return '40-49'
-    elif 50 <= age <= 59:
-        return '50-59'
-    elif 60 <= age <= 69:
-        return '60-69'
-    elif 70 <= age <= 79:
-        return '70-79'
+    elif 18 <= age <= 24:
+        return '18-24'
+    elif 25 <= age <= 39:
+        return '25-39'
+    elif 40 <= age <= 54:
+        return '40-54'
+    elif 55 <= age <= 64:
+        return '55-64'
+    elif 65 <= age <= 74:
+        return '65-74'
     else:
-        return '80+'
+        return '75+'
 
 # # Apply the function to create the 'Age_Group' column
 df['Age_Group'] = df['Client Age'].apply(categorize_age)
@@ -534,15 +529,14 @@ df_decades = df.groupby('Age_Group',  observed=True).size().reset_index(name='Pa
 
 # # Sort the result by the minimum age in each group
 age_order = [
-            '10-19',
-             '20-29', 
-             '30-39', 
-             '40-49', 
-             '50-59', 
-             '60-69', 
-             '70-79',
-             '80+'
-             ]
+    'N/A',
+    '18-24',
+    '25-39',
+    '40-54',
+    '55-64',
+    '65-74',
+    '75+'
+]
 
 df_decades['Age_Group'] = pd.Categorical(df_decades['Age_Group'], categories=age_order, ordered=True)
 df_decades = df_decades.sort_values('Age_Group')
@@ -623,7 +617,7 @@ age_pie = px.pie(
 ).update_traces(
     rotation=190,
     texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
+    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
 )
 
 # ------------------------------- Insurance Status ------------------------- #
@@ -742,7 +736,7 @@ insurance_pie=px.pie(
     rotation=145,
     # textinfo='value+percent',
     texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
+    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
 )
 
 # ------------------------------ Location Encountered --------------------------------- #
@@ -950,7 +944,7 @@ location_pie=px.pie(
     rotation=90,
     textinfo='none',
     # texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
+    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
 )
 
 # ------------------------------- Type of Support Given ---------------------------- #
@@ -1072,7 +1066,7 @@ support_pie = px.pie(
     rotation=110,
     # textinfo='value+percent',
     texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
+    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
 )
 
 # ------------------------ Individuals' Status (New vs. Returning) --------------------- #
@@ -1157,7 +1151,7 @@ status_pie=px.pie(
     rotation=-90,
     # textinfo='value+percent',
     texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='<b>%{label} Status</b>: %{value}<extra></extra>',
+    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
 )
 
 # ----------------------- Person Filling Out This Form ------------------------ #
@@ -1290,7 +1284,7 @@ person_pie=px.pie(
     rotation=140,
     # textinfo='value+percent',
     texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='<b>%{label} Status</b>: %{value}<extra></extra>',
+    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
 )
 
 # ---------------------- Zip 2 --------------------- #
@@ -1423,196 +1417,186 @@ zip_pie = px.pie(
 # print("Empty strings: \n", empty_strings.iloc[:, 10:12])
 
 # Filter df to exclued all rows where there is no value for "ZIP Code:"
-df = df[df['ZIP Code:'].str.strip() != ""]
+# df = df[df['ZIP Code:'].str.strip() != ""]
 
-mode_value = df['ZIP Code:'].mode()[0]
-df['ZIP Code:'] = df['ZIP Code:'].fillna(mode_value)
+# mode_value = df['ZIP Code:'].mode()[0]
+# df['ZIP Code:'] = df['ZIP Code:'].fillna(mode_value)
 
-# print("ZIP value counts:", df['ZIP Code:'].value_counts())
-# print("Zip Unique Before: \n", df['ZIP Code:'].unique().tolist())
+# # print("ZIP value counts:", df['ZIP Code:'].value_counts())
+# # print("Zip Unique Before: \n", df['ZIP Code:'].unique().tolist())
 
-# Check for non-numeric values in the 'ZIP Code:' column
-# print("ZIP non-numeric values:", df[~df['ZIP Code:'].str.isnumeric()]['ZIP Code:'].unique())
+# # Check for non-numeric values in the 'ZIP Code:' column
+# # print("ZIP non-numeric values:", df[~df['ZIP Code:'].str.isnumeric()]['ZIP Code:'].unique())
 
-df['ZIP Code:'] = df['ZIP Code:'].astype(str).str.strip()
+# df['ZIP Code:'] = df['ZIP Code:'].astype(str).str.strip()
 
-df['ZIP Code:'] = (
-    df['ZIP Code:']
-    .astype(str).str.strip()
-        .replace({
-            'Texas': mode_value,
-            'Unhoused': mode_value,
-            'unknown': mode_value,
-            'Unknown': mode_value,
-            'UnKnown': mode_value,
-            'uknown': mode_value,
-            'NA': mode_value,
-            "": mode_value,
-            'nan': mode_value
-}))
+# df['ZIP Code:'] = (
+#     df['ZIP Code:']
+#     .astype(str).str.strip()
+#         .replace({
+#             'Texas': mode_value,
+#             'Unhoused': mode_value,
+#             'unknown': mode_value,
+#             'Unknown': mode_value,
+#             'UnKnown': mode_value,
+#             'uknown': mode_value,
+#             'NA': mode_value,
+#             "": mode_value,
+#             'nan': mode_value
+# }))
 
-df['ZIP Code:'] = df['ZIP Code:'].where(df['ZIP Code:'].str.isdigit(), mode_value)
-df['ZIP Code:'] = df['ZIP Code:'].astype(int)
+# df['ZIP Code:'] = df['ZIP Code:'].where(df['ZIP Code:'].str.isdigit(), mode_value)
+# df['ZIP Code:'] = df['ZIP Code:'].astype(int)
 
-df_zip = df['ZIP Code:'].value_counts().reset_index(name='Residents')
-# df_zip['ZIP Code:'] = df_zip['index'].astype(int)
-df_zip['Residents'] = df_zip['Residents'].astype(int)
-# df_zip.drop('index', axis=1, inplace=True)
+# df_zip = df['ZIP Code:'].value_counts().reset_index(name='Residents')
+# # df_zip['ZIP Code:'] = df_zip['index'].astype(int)
+# df_zip['Residents'] = df_zip['Residents'].astype(int)
+# # df_zip.drop('index', axis=1, inplace=True)
 
-# print("Zip Unique After: \n", df['ZIP Code:'].unique().tolist())
+# # print("Zip Unique After: \n", df['ZIP Code:'].unique().tolist())
 
-# print(df_zip.head())
+# # print(df_zip.head())
 
-# Create a folium map
-m = folium.Map([30.2672, -97.7431], zoom_start=10)
+# # Create a folium map
+# m = folium.Map([30.2672, -97.7431], zoom_start=10)
 
-# Add different tile sets
-folium.TileLayer('OpenStreetMap', attr='© OpenStreetMap contributors').add_to(m)
-folium.TileLayer('Stamen Terrain', attr='Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.').add_to(m)
-folium.TileLayer('Stamen Toner', attr='Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.').add_to(m)
-folium.TileLayer('Stamen Watercolor', attr='Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.').add_to(m)
-folium.TileLayer('CartoDB positron', attr='Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.').add_to(m)
-folium.TileLayer('CartoDB dark_matter', attr='Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.').add_to(m)
+# # Add different tile sets
+# folium.TileLayer('OpenStreetMap', attr='© OpenStreetMap contributors').add_to(m)
+# folium.TileLayer('Stamen Terrain', attr='Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.').add_to(m)
+# folium.TileLayer('Stamen Toner', attr='Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.').add_to(m)
+# folium.TileLayer('Stamen Watercolor', attr='Map tiles by Stamen Design, under CC BY 3.0. Data by OpenStreetMap, under ODbL.').add_to(m)
+# folium.TileLayer('CartoDB positron', attr='Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.').add_to(m)
+# folium.TileLayer('CartoDB dark_matter', attr='Map tiles by CartoDB, under CC BY 3.0. Data by OpenStreetMap, under ODbL.').add_to(m)
 
-# Available map styles
-map_styles = {
-    'OpenStreetMap': {
-        'tiles': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    },
-    'Stamen Terrain': {
-        'tiles': 'https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg',
-        'attribution': 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under ODbL.'
-    },
-    'Stamen Toner': {
-        'tiles': 'https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png',
-        'attribution': 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under ODbL.'
-    },
-    'Stamen Watercolor': {
-        'tiles': 'https://stamen-tiles.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg',
-        'attribution': 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under ODbL.'
-    },
-    'CartoDB positron': {
-        'tiles': 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
-        'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    },
-    'CartoDB dark_matter': {
-        'tiles': 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-        'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    },
-    'ESRI Imagery': {
-        'tiles': 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        'attribution': 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-    }
-}
+# # Available map styles
+# map_styles = {
+#     'OpenStreetMap': {
+#         'tiles': 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+#         'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+#     },
+#     'Stamen Terrain': {
+#         'tiles': 'https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg',
+#         'attribution': 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under ODbL.'
+#     },
+#     'Stamen Toner': {
+#         'tiles': 'https://stamen-tiles.a.ssl.fastly.net/toner/{z}/{x}/{y}.png',
+#         'attribution': 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under ODbL.'
+#     },
+#     'Stamen Watercolor': {
+#         'tiles': 'https://stamen-tiles.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.jpg',
+#         'attribution': 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under ODbL.'
+#     },
+#     'CartoDB positron': {
+#         'tiles': 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+#         'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+#     },
+#     'CartoDB dark_matter': {
+#         'tiles': 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+#         'attribution': '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+#     },
+#     'ESRI Imagery': {
+#         'tiles': 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+#         'attribution': 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+#     }
+# }
 
-# Add tile layers to the map
-for style, info in map_styles.items():
-    folium.TileLayer(tiles=info['tiles'], attr=info['attribution'], name=style).add_to(m)
+# # Add tile layers to the map
+# for style, info in map_styles.items():
+#     folium.TileLayer(tiles=info['tiles'], attr=info['attribution'], name=style).add_to(m)
 
-# Select a style
-# selected_style = 'OpenStreetMap'
-# selected_style = 'Stamen Terrain'
-# selected_style = 'Stamen Toner'
-# selected_style = 'Stamen Watercolor'
-selected_style = 'CartoDB positron'
-# selected_style = 'CartoDB dark_matter'
-# selected_style = 'ESRI Imagery'
+# # Select a style
+# # selected_style = 'OpenStreetMap'
+# # selected_style = 'Stamen Terrain'
+# # selected_style = 'Stamen Toner'
+# # selected_style = 'Stamen Watercolor'
+# selected_style = 'CartoDB positron'
+# # selected_style = 'CartoDB dark_matter'
+# # selected_style = 'ESRI Imagery'
 
-# Apply the selected style
-if selected_style in map_styles:
-    style_info = map_styles[selected_style]
-    # print(f"Selected style: {selected_style}")
-    folium.TileLayer(
-        tiles=style_info['tiles'],
-        attr=style_info['attribution'],
-        name=selected_style
-    ).add_to(m)
-else:
-    print(f"Selected style '{selected_style}' is not in the map styles dictionary.")
-     # Fallback to a default style
-    folium.TileLayer('OpenStreetMap').add_to(m)
+# # Apply the selected style
+# if selected_style in map_styles:
+#     style_info = map_styles[selected_style]
+#     # print(f"Selected style: {selected_style}")
+#     folium.TileLayer(
+#         tiles=style_info['tiles'],
+#         attr=style_info['attribution'],
+#         name=selected_style
+#     ).add_to(m)
+# else:
+#     print(f"Selected style '{selected_style}' is not in the map styles dictionary.")
+#      # Fallback to a default style
+#     folium.TileLayer('OpenStreetMap').add_to(m)
     
-geolocator = Nominatim(user_agent="your_app_name", timeout=10)
-
-# Function to get coordinates from zip code
+# geolocator = Nominatim(user_agent="your_app_name", timeout=10)
+    
 # def get_coordinates(zip_code):
-#     geolocator = Nominatim(user_agent="response_q4_2024.py", timeout=10) # Add a timeout parameter to prevent long waits
-#     location = geolocator.geocode({"postalcode": zip_code, "country": "USA"})
-#     if location:
-#         return location.latitude, location.longitude
-#     else:
-#         print(f"Could not find coordinates for zip code: {zip_code}")
-#         return None, None
-    
-def get_coordinates(zip_code):
-    for _ in range(3):  # Retry up to 3 times
-        try:
-            location = geolocator.geocode({"postalcode": zip_code, "country": "USA"})
-            if location:
-                return location.latitude, location.longitude
-        except GeocoderTimedOut:
-            time.sleep(2)  # Wait before retrying
-    return None, None  # Return None if all retries fail
+#     for _ in range(3):  # Retry up to 3 times
+#         try:
+#             location = geolocator.geocode({"postalcode": zip_code, "country": "USA"})
+#             if location:
+#                 return location.latitude, location.longitude
+#         except GeocoderTimedOut:
+#             time.sleep(2)  # Wait before retrying
+#     return None, None  # Return None if all retries fail
 
-# Apply function to dataframe to get coordinates
-df_zip['Latitude'], df_zip['Longitude'] = zip(*df_zip['ZIP Code:'].apply(get_coordinates))
+# # Apply function to dataframe to get coordinates
+# df_zip['Latitude'], df_zip['Longitude'] = zip(*df_zip['ZIP Code:'].apply(get_coordinates))
 
-# Filter out rows with NaN coordinates
-df_zip = df_zip.dropna(subset=['Latitude', 'Longitude'])
-# print(df_zip.head())
-# print(df_zip[['Zip Code', 'Latitude', 'Longitude']].head())
-# print(df_zip.isnull().sum())
+# # Filter out rows with NaN coordinates
+# df_zip = df_zip.dropna(subset=['Latitude', 'Longitude'])
+# # print(df_zip.head())
+# # print(df_zip[['Zip Code', 'Latitude', 'Longitude']].head())
+# # print(df_zip.isnull().sum())
 
-# instantiate a feature group for the incidents in the dataframe
-incidents = folium.map.FeatureGroup()
+# # instantiate a feature group for the incidents in the dataframe
+# incidents = folium.map.FeatureGroup()
 
-for index, row in df_zip.iterrows():
-    lat, lng = row['Latitude'], row['Longitude']
+# for index, row in df_zip.iterrows():
+#     lat, lng = row['Latitude'], row['Longitude']
 
-    if pd.notna(lat) and pd.notna(lng):  
-        incidents.add_child(# Check if both latitude and longitude are not NaN
-        folium.vector_layers.CircleMarker(
-            location=[lat, lng],
-            radius=row['Residents'] * 1.2,  # Adjust the multiplication factor to scale the circle size as needed,
-            color='blue',
-            fill=True,
-            fill_color='blue',
-            fill_opacity=0.4
-        ))
+#     if pd.notna(lat) and pd.notna(lng):  
+#         incidents.add_child(# Check if both latitude and longitude are not NaN
+#         folium.vector_layers.CircleMarker(
+#             location=[lat, lng],
+#             radius=row['Residents'] * 1.2,  # Adjust the multiplication factor to scale the circle size as needed,
+#             color='blue',
+#             fill=True,
+#             fill_color='blue',
+#             fill_opacity=0.4
+#         ))
 
-# add pop-up text to each marker on the map
-latitudes = list(df_zip['Latitude'])
-longitudes = list(df_zip['Longitude'])
+# # add pop-up text to each marker on the map
+# latitudes = list(df_zip['Latitude'])
+# longitudes = list(df_zip['Longitude'])
 
-# labels = list(df_zip[['Zip Code', 'Residents_In_Zip_Code']])
-labels = df_zip.apply(lambda row: f"ZIP Code: {row['ZIP Code:']}, Patients: {row['Residents']}", axis=1)
+# # labels = list(df_zip[['Zip Code', 'Residents_In_Zip_Code']])
+# labels = df_zip.apply(lambda row: f"ZIP Code: {row['ZIP Code:']}, Patients: {row['Residents']}", axis=1)
 
-for lat, lng, label in zip(latitudes, longitudes, labels):
-    if pd.notna(lat) and pd.notna(lng):
-        folium.Marker([lat, lng], popup=label).add_to(m)
+# for lat, lng, label in zip(latitudes, longitudes, labels):
+#     if pd.notna(lat) and pd.notna(lng):
+#         folium.Marker([lat, lng], popup=label).add_to(m)
  
-formatter = "function(num) {return L.Util.formatNum(num, 5);};"
-mouse_position = MousePosition(
-    position='topright',
-    separator=' Long: ',
-    empty_string='NaN',
-    lng_first=False,
-    num_digits=20,
-    prefix='Lat:',
-    lat_formatter=formatter,
-    lng_formatter=formatter,
-)
+# formatter = "function(num) {return L.Util.formatNum(num, 5);};"
+# mouse_position = MousePosition(
+#     position='topright',
+#     separator=' Long: ',
+#     empty_string='NaN',
+#     lng_first=False,
+#     num_digits=20,
+#     prefix='Lat:',
+#     lat_formatter=formatter,
+#     lng_formatter=formatter,
+# )
 
-m.add_child(mouse_position)
+# m.add_child(mouse_position)
 
-# add incidents to map
-m.add_child(incidents)
+# # add incidents to map
+# m.add_child(incidents)
 
-map_path = 'zip_code_map.html'
-map_file = os.path.join(script_dir, map_path)
-m.save(map_file)
-map_html = open(map_file, 'r').read()
+# map_path = 'zip_code_map.html'
+# map_file = os.path.join(script_dir, map_path)
+# m.save(map_file)
+# map_html = open(map_file, 'r').read()
 
 # # ========================== DataFrame Table ========================== #
 
@@ -1658,7 +1642,7 @@ app.layout = html.Div(
                 'Client Navigation FY 2025 Report', 
                 className='title'),
             html.H1(
-                f'Oct 2024 - Sep {report_year}', 
+                f'Oct 2024 - {current_month} {report_year}', 
                 className='title2'),
             html.Div(
                 className='btn-box', 
