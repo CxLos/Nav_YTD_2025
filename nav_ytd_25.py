@@ -19,7 +19,7 @@ import folium
 from folium.plugins import MousePosition
 
 import dash
-from dash import dcc, html
+from dash import dcc, html, dash_table
 
 # Google Web Credentials
 import json
@@ -69,9 +69,10 @@ df.columns = df.columns.str.strip()
 
 # Filtered df where 'Date of Activity:' is between October 1, 2024 to September 30, 2025
 df['Date of Activity'] = pd.to_datetime(df['Date of Activity'], format='%m/%d/%Y', errors='coerce')
-df = df[(df['Date of Activity'] >= '2024-10-01') & (df['Date of Activity'] <= '2025-07-31')]
+df = df[(df['Date of Activity'] >= '2024-10-01') & (df['Date of Activity'] <= '2025-12-31')]
 
 # Get the reporting month:
+int_year = 2025
 current_month = datetime(2025, 7, 1).strftime("%B")
 report_year = datetime(2025, 1, 1).year
 
@@ -195,22 +196,32 @@ clients_bar = px.bar(
     color='Month',
     # color_discrete_sequence=['#1f77b4']
 ).update_layout(
-    height=700,
-    width=900,
+    # height=700,
+    # width=900,
     title=dict(
         text='Clients Served by Month',
         x=0.5,
-        font=dict(size=25, family='Calibri', color='black')
+        font=dict(size=21, family='Calibri', color='black')
     ),
-    font=dict(family='Calibri', size=18, color='black'),
+    font=dict(family='Calibri', size=16, color='black'),
     xaxis=dict(
-        title=dict(text='Number of Clients', font=dict(size=20)),
-        tickfont=dict(size=18)
+        title=dict(text='Number of Clients', font=dict(size=16)),
+        tickfont=dict(size=16)
     ),
     yaxis=dict(
         title='Month',
-        tickfont=dict(size=18),
+        tickfont=dict(size=16),
         autorange='reversed'  # optional: most recent month at top
+    ),
+    legend=dict(
+        title='',
+        orientation="v",  # Vertical legend
+        x=1.05,  # Position legend to the right
+        y=1,  # Position legend at the top
+        xanchor="left",  # Anchor legend to the left
+        yanchor="top",  # Anchor legend to the top
+        # visible=False,
+        visible=True,
     ),
     hovermode='closest',
     bargap=0.2,
@@ -226,11 +237,20 @@ clients_pie = px.pie(
     names='Month',
     values='Clients_Served',
 ).update_layout(
-    height=700,
-    width=900,
-    title='Clients Served by Month',
-    title_x=0.5,
-    font=dict(family='Calibri', size=17, color='black')
+    title=dict(
+        text='Ratio of Clients Served by Month',
+        x=0.5, 
+        font=dict(
+            size=21,
+            family='Calibri',
+            color='black',
+        )
+    ),
+    font=dict(
+        family='Calibri',
+        size=16,
+        color='black'
+    )
 ).update_traces(
     rotation=200,
     texttemplate='%{value}<br>(%{percent:.2%})',
@@ -301,36 +321,36 @@ race_bar=px.bar(
     color='Ethnicity',
     text='Count',
 ).update_layout(
-    height=700, 
-    width=1000,
+    # height=700, 
+    # width=1000,
     title=dict(
         text='Race Distribution Bar Chart',
         x=0.5, 
         font=dict(
-            size=25,
+            size=21,
             family='Calibri',
             color='black',
             )
     ),
     font=dict(
         family='Calibri',
-        size=18,
+        size=16,
         color='black'
     ),
     xaxis=dict(
         tickangle=-20,  # Rotate x-axis labels for better readability
-        tickfont=dict(size=18),  # Adjust font size for the tick labels
+        tickfont=dict(size=16),  # Adjust font size for the tick labels
         showticklabels=False,  # Hide x-tick labels
         title=dict(
             # text=None,
             text="Race/ Ethnicity",
-            font=dict(size=20),  # Font size for the title
+            font=dict(size=16),  # Font size for the title
         ),
     ),
     yaxis=dict(
         title=dict(
             text='Count',
-            font=dict(size=20),  # Font size for the title
+            font=dict(size=16),  # Font size for the title
         ),
     ),
     legend=dict(
@@ -357,18 +377,26 @@ race_pie=px.pie(
     names='Ethnicity',
     values='Count'
 ).update_layout(
-    height=700, 
-    title='Race Distribution Pie Chart',
-    title_x=0.5,
+    # height=700, 
+    title=dict(
+        text='Race Distribution Ratio',
+        x=0.5, 
+        font=dict(
+            size=21,
+            family='Calibri',
+            color='black',
+        )
+    ),
     font=dict(
         family='Calibri',
-        size=17,
+        size=16,
         color='black'
     )
 ).update_traces(
+    rotation=90,
     # textinfo='value+percent',
-    texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
+    texttemplate='%{value}<br>(%{percent:.1%})',
+    hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
 )
 
 # ------------------------------- Gender Distribution ---------------------------- #
@@ -408,35 +436,35 @@ gender_bar=px.bar(
     color='Gender',
     text='Count',
 ).update_layout(
-    height=700, 
-    width=1000,
+    # height=700, 
+    # width=1000,
     title=dict(
         text='Sex Distribution Bar Chart',
         x=0.5, 
         font=dict(
-            size=25,
+            size=21,
             family='Calibri',
             color='black',
             )
     ),
     font=dict(
         family='Calibri',
-        size=18,
+        size=16,
         color='black'
     ),
     xaxis=dict(
         tickangle=0,  # Rotate x-axis labels for better readability
-        tickfont=dict(size=18),  # Adjust font size for the tick labels
+        tickfont=dict(size=16),  # Adjust font size for the tick labels
         title=dict(
             # text=None,
             text="Gender",
-            font=dict(size=20),  # Font size for the title
+            font=dict(size=16),  # Font size for the title
         ),
     ),
     yaxis=dict(
         title=dict(
             text='Count',
-            font=dict(size=20),  # Font size for the title
+            font=dict(size=16),  # Font size for the title
         ),
     ),
     legend=dict(
@@ -462,18 +490,26 @@ gender_pie=px.pie(
     df,
     names='Gender'
 ).update_layout(
-    height=700,
-    title='Patient Visits by Sex',
-    title_x=0.5,
+    # height=700,
+    title=dict(
+        text='Ratio of Patient Visits by Sex',
+        x=0.5, 
+        font=dict(
+            size=21,
+            family='Calibri',
+            color='black',
+        )
+    ),
     font=dict(
         family='Calibri',
-        size=17,
+        size=16,
         color='black'
     )
 ).update_traces(
+    rotation=-30,
     # textinfo='value+percent',
-    texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
+    texttemplate='%{value}<br>(%{percent:.1%})',
+    hovertemplate='<b>%{label} Visits</b>: %{value}<extra></extra>'
 )
 
 # ------------------------------- Age Distribution ---------------------------- #
@@ -550,35 +586,35 @@ age_bar=px.bar(
     color='Age_Group',
     text='Patient_Visits',
 ).update_layout(
-    height=700, 
-    width=1000,
+    # height=700, 
+    # width=1000,
     title=dict(
         text='Client Age Distribution',
         x=0.5, 
         font=dict(
-            size=25,
+            size=21,
             family='Calibri',
             color='black',
             )
     ),
     font=dict(
         family='Calibri',
-        size=18,
+        size=16,
         color='black'
     ),
     xaxis=dict(
         tickangle=0,  # Rotate x-axis labels for better readability
-        tickfont=dict(size=18),  # Adjust font size for the tick labels
+        tickfont=dict(size=16),  # Adjust font size for the tick labels
         title=dict(
             # text=None,
             text="Age Group",
-            font=dict(size=20),  # Font size for the title
+            font=dict(size=16),  # Font size for the title
         ),
     ),
     yaxis=dict(
         title=dict(
             text='Number of Visits',
-            font=dict(size=20),  # Font size for the title
+            font=dict(size=16),  # Font size for the title
         ),
     ),
     legend=dict(
@@ -606,18 +642,24 @@ age_pie = px.pie(
     names='Age_Group',
     values='Patient_Visits',
 ).update_layout(
-    height=700, 
-    title='Client Age Distribution',
-    title_x=0.5,
+    title=dict(
+        text='Ratio of Client Age Distribution',
+        x=0.5, 
+        font=dict(
+            size=21,
+            family='Calibri',
+            color='black',
+        )
+    ),
     font=dict(
         family='Calibri',
-        size=17,
+        size=16,
         color='black'
     )
 ).update_traces(
     rotation=190,
-    texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
+    texttemplate='%{value}<br>(%{percent:.1%})',
+    hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
 )
 
 # ------------------------------- Insurance Status ------------------------- #
@@ -662,46 +704,46 @@ df_insurance = df.groupby("Insurance").size().reset_index(name='Count')
 # Insurance Status Bar Chart
 insurance_bar=px.bar(
     df_insurance,
-    x="Count",
-    y='Insurance',
+    x="Insurance",
+    y='Count',
     color="Insurance",
     text='Count',
 ).update_layout(
-    height=700, 
-    width=900,
+    # height=700, 
+    # width=1000,
     title=dict(
         text='Insurance Status Bar Chart',
         x=0.5, 
         font=dict(
-            size=25,
+            size=21,
             family='Calibri',
             color='black',
             )
     ),
     font=dict(
         family='Calibri',
-        size=18,
+        size=16,
         color='black'
     ),
     xaxis=dict(
         tickangle=-20, 
-        tickfont=dict(size=18),  
+        tickfont=dict(size=16),  
         showticklabels=False,  
         # showticklabels=True,  
         title=dict(
             # text=None,
             text="Insurance",
-            font=dict(size=20),  
+            font=dict(size=16),  
         ),
     ),
     yaxis=dict(
         title=dict(
             text='Count',
-            font=dict(size=20),  
+            font=dict(size=16),  
         ),
     ),
     legend=dict(
-        title='Insurance',
+        title='',
         orientation="v",  # Vertical legend
         x=1.05,  # Position legend to the right
         y=1,  # Position legend at the top
@@ -724,19 +766,26 @@ insurance_pie=px.pie(
     names="Insurance",
     values='Count'
 ).update_layout(
-    height=700, 
-    title='Insurance Status Pie Chart',
-    title_x=0.5,
+    # height=700, 
+    title=dict(
+        text='Insurance Status Ratio',
+        x=0.5, 
+        font=dict(
+            size=21,
+            family='Calibri',
+            color='black',
+        )
+    ),
     font=dict(
         family='Calibri',
-        size=17,
+        size=16,
         color='black'
     )
 ).update_traces(
-    rotation=145,
+    rotation=155,
     # textinfo='value+percent',
-    texttemplate='%{value}<br>(%{percent:.2%})',
-    hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
+    texttemplate='%{value}<br>(%{percent:.1%})',
+    hovertemplate='<b>%{label}</b>: %{value}<extra></extra>'
 )
 
 # ------------------------------ Location Encountered --------------------------------- #
@@ -874,8 +923,8 @@ location_bar=px.bar(
     color="Location",
     text='Count',
 ).update_layout(
-    height=1100, 
-    width=2000,
+    # height=1100, 
+    # width=2000,
     title=dict(
         text='Location Encountered Bar Chart',
         x=0.5, 
@@ -908,7 +957,7 @@ location_bar=px.bar(
         ),
     ),
     legend=dict(
-        title='Location',
+        title='',
         orientation="v",  # Vertical legend
         x=1.05,  # Position legend to the right
         y=1,  # Position legend at the top
@@ -931,8 +980,8 @@ location_pie=px.pie(
     names="Location",
     values='Count'
 ).update_layout(
-    height=900,
-    width=1800,
+    # height=900,
+    # width=1800,
     title='Location Encountered Pie Chart',
     title_x=0.5,
     font=dict(
@@ -998,8 +1047,8 @@ support_bar=px.bar(
     color='Support',
     text='Count',
 ).update_layout(
-    height=700, 
-    width=1000,
+    # height=700, 
+    # width=1000,
     title=dict(
         text='Support Provided Distribution',
         x=0.5, 
@@ -1055,7 +1104,7 @@ support_pie = px.pie(
     values='Count',
 ).update_layout(
     title='Support Distribution Pie Chart',
-    height=700, 
+    # height=700, 
     title_x=0.5,
     font=dict(
         family='Calibri',
@@ -1082,8 +1131,8 @@ status_bar=px.bar(
     color='Status',
     text='Count',
 ).update_layout(
-    height=700, 
-    width=900,
+    # height=700, 
+    # width=900,
     title=dict(
         text='New vs. Returning Clients',
         x=0.5, 
@@ -1139,7 +1188,7 @@ status_pie=px.pie(
     names="Status",
     values='Count'  # Specify the values parameter
 ).update_layout(
-    height=700, 
+    # height=700, 
     title='New vs. Returning',
     title_x=0.5,
     font=dict(
@@ -1215,8 +1264,8 @@ person_bar=px.bar(
     color='Person',
     text='Count',
 ).update_layout(
-    height=700, 
-    width=900,
+    # height=700, 
+    # width=900,
     title=dict(
         text='People Submitting Forms',
         x=0.5, 
@@ -1272,7 +1321,7 @@ person_pie=px.pie(
     names="Person",
     values='Count'  # Specify the values parameter
 ).update_layout(
-    height=700, 
+    # height=700, 
     title='Ratio of People Submitting Forms',
     title_x=0.5,
     font=dict(
@@ -1281,7 +1330,7 @@ person_pie=px.pie(
         color='black'
     )
 ).update_traces(
-    rotation=140,
+    rotation=110,
     # textinfo='value+percent',
     texttemplate='%{value}<br>(%{percent:.2%})',
     hovertemplate='%{label}: <b>%{value}</b><br>Percent: <b>%{percent:.2%}</b><extra></extra>',
@@ -1360,8 +1409,8 @@ zip_fig =px.bar(
     xaxis_title='Residents',
     yaxis_title='Zip Code',
     title_x=0.5,
-    height=2300,
-    width=1500,
+    # height=2300,
+    # width=1500,
     font=dict(
         family='Calibri',
         size=17,
@@ -1397,8 +1446,8 @@ zip_pie = px.pie(
     color_discrete_sequence=px.colors.qualitative.Safe
 ).update_layout(
     title_x=0.5,
-    height=700,
-    width=900,
+    # height=700,
+    # width=900,
     font=dict(
         family='Calibri',
         size=17,
@@ -1600,33 +1649,17 @@ zip_pie = px.pie(
 
 # # ========================== DataFrame Table ========================== #
 
-df_table = go.Figure(data=[go.Table(
-    # columnwidth=[50, 50, 50],  # Adjust the width of the columns
-    header=dict(
-        values=list(df.columns),
-        fill_color='paleturquoise',
-        align='center',
-        height=30,  # Adjust the height of the header cells
-        # line=dict(color='black', width=1),  # Add border to header cells
-        font=dict(size=12)  # Adjust font size
-    ),
-    cells=dict(
-        values=[df[col] for col in df.columns],
-        fill_color='lavender',
-        align='left',
-        height=25,  # Adjust the height of the cells
-        # line=dict(color='black', width=1),  # Add border to cells
-        font=dict(size=12)  # Adjust font size
-    )
-)])
+df = df.sort_values('Date of Activity', ascending=True)
 
-df_table.update_layout(
-    margin=dict(l=50, r=50, t=30, b=40),  # Remove margins
-    height=400,
-    # width=1500,  # Set a smaller width to make columns thinner
-    paper_bgcolor='rgba(0,0,0,0)',  # Transparent background
-    plot_bgcolor='rgba(0,0,0,0)'  # Transparent plot area
-)
+# create a display index column and prepare table data/columns
+# reset index to ensure contiguous numbering after any filtering/sorting upstream
+df_indexed = df.reset_index(drop=True).copy()
+# Insert '#' as the first column (1-based row numbers)
+df_indexed.insert(0, '#', df_indexed.index + 1)
+
+# Convert to records for DataTable
+data = df_indexed.to_dict('records')
+columns = [{"name": col, "id": col} for col in df_indexed.columns]
 
 # ============================== Dash Application ========================== #
 
@@ -1639,10 +1672,10 @@ app.layout = html.Div(
             className='divv', 
             children=[ 
             html.H1(
-                'Client Navigation FY 2025 Report', 
+                'Client Navigation Report', 
                 className='title'),
             html.H1(
-                f'Oct 2024 - {current_month} {report_year}', 
+                f'YTD {report_year}', 
                 className='title2'),
             html.Div(
                 className='btn-box', 
@@ -1654,412 +1687,534 @@ app.layout = html.Div(
                 ]),
     ]),  
 
-# # Data Table
-# html.Div(
-#     className='row0',
-#     children=[
-#         html.Div(
-#             className='table',
-#             children=[
-#                 html.H1(
-#                     className='table-title',
-#                     children='Data Table'
-#                 )
-#             ]
-#         ),
-#         html.Div(
-#             className='table2', 
-#             children=[
-#                 dcc.Graph(
-#                     className='data',
-#                     figure=df_table
-#                 )
-#             ]
-#         )
-#     ]
-# ),
+# ============================ Rollups ========================== #
 
-# # ROW 1
+# ROW 1
 html.Div(
-    className='row1',
+    className='rollup-row',
     children=[
-
+        
         html.Div(
-            className='graph11',
+            className='rollup-box-tl',
             children=[
                 html.Div(
-                    className='high3',
-                    children=[f'{report_year} Clients Serviced:']
+                    className='title-box',
+                    children=[
+                        html.H3(
+                            className='rollup-title',
+                            children=[f'{report_year} Clients Served']
+                        ),
+                    ]
                 ),
+
                 html.Div(
-                    className='circle2',
+                    className='circle-box',
                     children=[
                         html.Div(
-                            className='hilite',
+                            className='circle-1',
                             children=[
                                 html.H1(
-                                    className='high4',
-                                    children=[clients_served]
+                                className='rollup-number',
+                                children=[clients_served]
                                 ),
                             ]
-                        ),
+                        )
                     ],
                 ),
-            ],
+            ]
         ),
         html.Div(
-            className='graph22',
+            className='rollup-box-tr',
             children=[
                 html.Div(
-                    className='high1',
-                    children=[f'{report_year} Navigation Hours:']
+                    className='title-box',
+                    children=[
+                        html.H3(
+                            className='rollup-title',
+                            children=[f'{report_year} Navigation Hours']
+                        ),
+                    ]
                 ),
                 html.Div(
-                    className='circle1',
+                    className='circle-box',
                     children=[
                         html.Div(
-                            className='hilite',
+                            className='circle-2',
                             children=[
                                 html.H1(
-                                    className='high2',
-                                    children=[df_duration]
+                                className='rollup-number',
+                                children=[df_duration]
                                 ),
                             ]
-                        ),
+                        )
                     ],
                 ),
-            ],
+            ]
         ),
     ]
 ),
 
-# # ROW 1
 html.Div(
-    className='row1',
+    className='rollup-row',
     children=[
-
         html.Div(
-            className='graph11',
+            className='rollup-box-bl',
             children=[
                 html.Div(
-                    className='high3',
-                    children=[f'{report_year} Travel Hours']
+                    className='title-box',
+                    children=[
+                        html.H3(
+                            className='rollup-title',
+                            children=[f'{report_year} Travel Hours']
+                        ),
+                    ]
                 ),
+
                 html.Div(
-                    className='circle2',
+                    className='circle-box',
                     children=[
                         html.Div(
-                            className='hilite',
+                            className='circle-3',
                             children=[
                                 html.H1(
-                                    className='high5',
-                                    children=[travel_time]
+                                className='rollup-number',
+                                children=[travel_time]
                                 ),
                             ]
-                        ),
+                        )
                     ],
                 ),
-            ],
+            ]
         ),
         html.Div(
-            className='graph22',
+            className='rollup-box-br',
             children=[
                 html.Div(
-                    className='high1',
-                    children=['Placeholder']
+                    className='title-box',
+                    children=[
+                        html.H3(
+                            className='rollup-title',
+                            children=['Placeholder']
+                        ),
+                    ]
                 ),
                 html.Div(
-                    className='circle1',
+                    className='circle-box',
                     children=[
                         html.Div(
-                            className='hilite',
+                            className='circle-4',
                             children=[
                                 html.H1(
-                                    className='high2',
-                                    children=[]
+                                className='rollup-number',
+                                children=['-']
                                 ),
                             ]
-                        ),
+                        )
                     ],
                 ),
-            ],
+            ]
         ),
     ]
 ),
 
-# # ROW 3
+# ============================ Visuals ========================== #
+
 html.Div(
-    className='row2',
+    className='graph-container',
     children=[
-        html.Div(
-            className='graph3',
-            children=[
-                dcc.Graph(
-                    figure=clients_bar
-                )
-            ]
+        
+        html.H1(
+            className='visuals-text',
+            children='Visuals'
         ),
+        
         html.Div(
-            className='graph4',
+            className='graph-row',
             children=[
-                dcc.Graph(
-                    figure=clients_pie
-                )
-            ]
-        )
-    ]
-),
-
-# # ROW 3
-html.Div(
-    className='row2',
-    children=[
-        html.Div(
-            className='graph3',
-            children=[
-                dcc.Graph(
-                    figure=race_bar
-                )
-            ]
-        ),
-        html.Div(
-            className='graph4',
-            children=[
-                dcc.Graph(
-                    figure=race_pie
-                )
-            ]
-        )
-    ]
-),
-
-# # ROW 5
-html.Div(
-    className='row2',
-    children=[
-        html.Div(
-            className='graph3',
-            children=[
-                dcc.Graph(
-                    figure=gender_bar
-                )
-            ]
-        ),
-        html.Div(
-            className='graph4',
-            children=[
-                #
-                dcc.Graph(
-                    figure=gender_pie
-                )
-            ]
-        )
-    ]
-),
-
-# # ROW 5
-html.Div(
-    className='row2',
-    children=[
-        html.Div(
-            className='graph3',
-            children=[
-                dcc.Graph(
-                    figure=age_bar
-                )
-            ]
-        ),
-        html.Div(
-            className='graph4',
-            children=[
-                dcc.Graph(
-                    figure=age_pie
-                )
-            ]
-        )
-    ]
-),
-
-# # ROW 3
-html.Div(
-    className='row2',
-    children=[
-        html.Div(
-            className='graph3',
-            children=[
-                dcc.Graph(
-                    figure=insurance_bar
-                )
-            ]
-        ),
-        html.Div(
-            className='graph4',
-            children=[
-  
-                dcc.Graph(
-                    figure=insurance_pie
-                )
-            ]
-        )
-    ]
-),
-
-html.Div(
-    className='row3',
-    children=[
-        html.Div(
-            className='graph33',
-            children=[
-                dcc.Graph(
-                    figure=location_bar
-                )
-            ]
-        ),
-    ]
-),   
-
-html.Div(
-    className='row3',
-    children=[
-        html.Div(
-            className='graph33',
-            children=[
-                dcc.Graph(
-                    figure=location_pie
-                )
-            ]
-        ),
-    ]
-),   
-
-# # ROW 5
-html.Div(
-    className='row2',
-    children=[
-        html.Div(
-            className='graph3',
-            children=[
-                dcc.Graph(
-                    figure=support_bar
-                )
-            ]
-        ),
-        html.Div(
-            className='graph4',
-            children=[
-                #
-                dcc.Graph(
-                    figure=support_pie
-                )
-            ]
-        )
-    ]
-),
-
-# # ROW 6
-html.Div(
-    className='row1',
-    children=[
-        html.Div(
-            className='graph1',
-            children=[
-                dcc.Graph(
-                    figure=status_bar
-
-                )
-            ]
-        ),
-        html.Div(
-            className='graph2',
-            children=[
-                dcc.Graph(
-                    figure=status_pie
-                )
-            ]
-        )
-    ]
-),
-
-# # ROW 7
-html.Div(
-    className='row1',
-    children=[
-        html.Div(
-            className='graph1',
-            children=[
-                dcc.Graph(
-                    figure=person_bar
-                )
-            ]
-        ),
-        html.Div(
-            className='graph2',
-            children=[
-                # 
-                dcc.Graph(
-                    figure=person_pie
-                )
-            ]
-        )
-    ]
-),
-
-# ROW 9
-html.Div(
-    className='row4',
-    children=[
-        html.Div(
-            className='zip_graph',
-            children=[
-                dcc.Graph(
-                    figure=zip_fig
-                )
-            ]
-        )
-    ]
-),
-
-# # ROW 9
-# html.Div(
-#     className='row4',
-#     children=[
-#         html.Div(
-#             className='graph5',
-#             children=[
-#                 dcc.Graph(
-#                     figure=zip_pie
-#                 )
-#             ]
-#         )
-#     ]
-# ),
-
-# # ROW 8
-html.Div(
-    className='row3',
-    children=[
-        html.Div(
-            className='graph6',
-            children=[
-                html.H1(
-                    'Number of Visitors by Zip Code', 
-                    className='zip'
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=clients_bar
+                        )
+                    ]
                 ),
-                html.Iframe(
-                    className='folium',
-                    id='folium-map',
-                    # srcDoc=map_html
-                )
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=clients_pie
+                        )
+                    ]
+                ),
             ]
-        )
+        ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=race_bar
+                        )
+                    ]
+                ),
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=race_pie
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=gender_bar
+                        )
+                    ]
+                ),
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=gender_pie
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=age_bar
+                        )
+                    ]
+                ),
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=age_pie
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        # html.Div(
+        #     className='graph-row',
+        #     children=[
+        #         html.Div(
+        #             className='graph-box',
+        #             children=[
+        #                 dcc.Graph(
+        #                     className='graph',
+        #                     figure=insurance_bar
+        #                 )
+        #             ]
+        #         ),
+        #         html.Div(
+        #             className='graph-box',
+        #             children=[
+        #                 dcc.Graph(
+        #                     className='graph',
+        #                     figure=insurance_pie
+        #                 )
+        #             ]
+        #         ),
+        #     ]
+        # ),
+        
+        # html.Div(
+        #     className='graph-row',
+        #     children=[
+        #         html.Div(
+        #             className='graph-box',
+        #             children=[
+        #                 dcc.Graph(
+        #                     className='graph',
+        #                     figure=location_bar
+        #                 )
+        #             ]
+        #         ),
+        #         html.Div(
+        #             className='graph-box',
+        #             children=[
+        #                 dcc.Graph(
+        #                     className='graph',
+        #                     figure=location_pie
+        #                 )
+        #             ]
+        #         ),
+        #     ]
+        # ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='wide-box',
+                    children=[
+                        dcc.Graph(
+                            className='wide-graph',
+                            figure=insurance_bar
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='wide-box',
+                    children=[
+                        dcc.Graph(
+                            className='wide-graph',
+                            figure=insurance_pie
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='wide-box',
+                    children=[
+                        dcc.Graph(
+                            className='wide-graph',
+                            figure=location_bar
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='wide-box',
+                    children=[
+                        dcc.Graph(
+                            className='wide-graph',
+                            figure=location_pie
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=support_bar
+                        )
+                    ]
+                ),
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=support_pie
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=status_bar
+                        )
+                    ]
+                ),
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=status_pie
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=person_bar
+                        )
+                    ]
+                ),
+                html.Div(
+                    className='graph-box',
+                    children=[
+                        dcc.Graph(
+                            className='graph',
+                            figure=person_pie
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        html.Div(
+            className='graph-row',
+            children=[
+                html.Div(
+                    className='zip-box',
+                    children=[
+                        dcc.Graph(
+                            className='zip-graph',
+                            figure=zip_fig
+                        )
+                    ]
+                ),
+            ]
+        ),
+        
+        # html.Div(
+        #     className='graph-row',
+        #     children=[
+        #         html.Div(
+        #             className='wide-box',
+        #             children=[
+        #                 dcc.Graph(
+        #                     className='zip-graph',
+        #                     figure=zip_pie
+        #                 )
+        #             ]
+        #         ),
+        #     ]
+        # ),
+        
+        html.Div(
+            className='folium-row',
+            children=[
+                html.Div(
+                    className='folium-box',
+                    children=[
+                        html.H1(
+                            'Visitors by Zip Code Map', 
+                            className='zip'
+                        ),
+                        html.Iframe(
+                            className='folium',
+                            id='folium-map',
+                            # srcDoc=map_html
+                        )
+                    ]
+                ),
+            ]
+        ),
     ]
-)
+),
+
+# ============================ Data Table ========================== #
+
+    html.Div(
+        className='data-box',
+        children=[
+            html.H1(
+                className='data-title',
+                children='Navigation Table'
+            ),
+            dash_table.DataTable(
+                id='applications-table',
+                data=data,
+                columns=columns,
+                page_size=10,
+                sort_action='native',
+                filter_action='native',
+                row_selectable='multi',
+                style_table={
+                    'overflowX': 'auto',
+                    # 'border': '3px solid #000',
+                    # 'borderRadius': '0px'
+                },
+                style_cell={
+                    'textAlign': 'left',
+                    'minWidth': '100px', 
+                    'whiteSpace': 'normal'
+                },
+                style_header={
+                    'textAlign': 'center', 
+                    'fontWeight': 'bold',
+                    'backgroundColor': '#34A853', 
+                    'color': 'white'
+                },
+                style_data={
+                    'whiteSpace': 'normal',
+                    'height': 'auto',
+                },
+                style_cell_conditional=[
+                    # make the index column narrow and centered
+                    {'if': {'column_id': '#'},
+                    'width': '20px', 'minWidth': '60px', 'maxWidth': '60px', 'textAlign': 'center'},
+                    {'if': {'column_id': 'Timestamp'},
+                    'width': '50px', 'minWidth': '100px', 'maxWidth': '200px', 'textAlign': 'center'},
+                    {'if': {'column_id': 'Date of Activity'},
+                    'width': '50px', 'minWidth': '100px', 'maxWidth': '200px', 'textAlign': 'center'},
+                    {'if': {'column_id': 'Description'},
+                    'width': '200px', 'minWidth': '400px', 'maxWidth': '200px', 'textAlign': 'center'},
+                ]
+            ),
+        ]
+    ),
+
+
 ])
 
 print(f"Serving Flask app '{current_file}'! 🚀")
 
 if __name__ == '__main__':
-    app.run_server(debug=
+    app.run(debug=
                    True)
                 #    False)
                 
