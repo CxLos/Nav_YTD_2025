@@ -25,7 +25,7 @@ from dash import dcc, html, dash_table
 import json
 import base64
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 
 # 'data/~$bmhc_data_2024_cleaned.xlsx'
 # print('System Version:', sys.version)
@@ -50,11 +50,11 @@ encoded_key = os.getenv("GOOGLE_CREDENTIALS")
 
 if encoded_key:
     json_key = json.loads(base64.b64decode(encoded_key).decode("utf-8"))
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(json_key, scope)
+    creds = Credentials.from_service_account_info(json_key, scopes=scope)
 else:
     creds_path = r"C:\Users\CxLos\OneDrive\Documents\BMHC\Data\bmhc-timesheet-4808d1347240.json"
     if os.path.exists(creds_path):
-        creds = ServiceAccountCredentials.from_json_keyfile_name(creds_path, scope)
+        creds = Credentials.from_service_account_file(creds_path, scopes=scope)
     else:
         raise FileNotFoundError("Service account JSON file not found and GOOGLE_CREDENTIALS is not set.")
 
@@ -145,9 +145,12 @@ df.rename(
         "Location Encountered:" : "Location",
         "Individual's Insurance Status:" : "Insurance",
         "Individual's Status:" : "Status",
-        "Type of support given:" : "Support",
+        "Type of Coordination/Navigation Provided:" : "Support",
         "Gender:" : "Gender",
-        "Race/Ethnicity:" : "Ethnicity",
+        "Race / Ethnicity:" : "Ethnicity",
+        "Provide brief support description:" : "Description",
+        "Housing Status" : "Housing",
+        "Income Level" : "Income",
         # "" : "",
     }, 
 inplace=True)
@@ -305,9 +308,11 @@ df['Ethnicity'] = (
         .str.strip()
         .replace({
             "Hispanic/Latino": "Hispanic/ Latino", 
-            "White": "White/ European Ancestry", 
+            "Hispanic/ Latino": "Hispanic / Latino", 
+            "White": "White / Caucasian", 
+            "White/ European Ancestry": "White / Caucasian", 
             "Group search": "N/A", 
-            "Group search": "N/A", 
+            "Black/ African American": "Black / African American", 
         })
 )
 
@@ -461,6 +466,7 @@ gender_bar=px.bar(
             text="Gender",
             font=dict(size=16),  # Font size for the title
         ),
+        showticklabels=False,  # Hide x-axis tick labels
     ),
     yaxis=dict(
         title=dict(
@@ -475,7 +481,8 @@ gender_bar=px.bar(
         y=1,  # Position legend at the top
         xanchor="left",  # Anchor legend to the left
         yanchor="top",  # Anchor legend to the top
-        visible=False
+        visible=True
+        # visible=False
         
     ),
     hovermode='closest', # Display only one hover label per trace
@@ -668,32 +675,27 @@ age_pie = px.pie(
 # print("Insurance Unique Before:", df["Insurance"].unique().tolist())
 
 insurance_unique = [
-    '',
-    'Private Insurance', 
-    'MAP',
-    'None',
-    'Unknown', 
-    'MAP 100', 
-    '30 Day 100', 
-    'NAPHCARE', 
-    'MAP Basic', 
-    'Medicare', 
-    'Just got it!!!', 
-    'Medicaid', 
-    '30 DAY 100'
+'MAP', 'None', '30 Day 100', 'MAP Basic', 'Medicare', 'Private Insurance', '30DAY 100', 'MAP 100', '30 DAY100', 'Medicaid', 'SFS 100', '30 DAY 100', 'unknown', 'Unknown', 'SouthBridge', 'NAPHCARE', 'SFS 150', '30 day', 'BCBS STAR', 'United Health Care', 'Just got it!!!', '', 'NONE'
 ]
 
 df["Insurance"] = (
     df["Insurance"]
     .str.strip()
     .replace({
-        '': 'Unknown',
-        'Just got it!!!': 'Private Insurance',
-        '30 DAY 100': '30 Day 100',
-        'Medicare': 'Medicaid',
-        'Medicare': 'Medicaid',
+        '': 'N/A',
+        'unknown': 'Unknown',
         'NONE': 'None',
+        'Just got it!!!': 'Private Insurance',
+       
+        'Medicare': 'Medicaid',
+        'Medicare': 'Medicaid',
+       
         'Map 000': 'MAP 100',
+        '30 DAY 100': '30 Day 100',
+        '30 Day 100': '30 Day 100',
+        '30 DAY100': '30 Day 100',
+        '30DAY 100': '30 Day 100',
+        '30 day': '30 Day 100',
     })
 )
 
@@ -1342,59 +1344,34 @@ person_pie=px.pie(
 # df['ZIP2'] = df['ZIP Code:']
 # print('ZIP2 Unique Before: \n', df['ZIP2'].unique().tolist())
 
-# zip2_unique =[
-# 78753, '', 78721, 78664, 78725, 78758, 78724, 78660, 78723, 78748, 78744, 78752, 78745, 78617, 78754, 78653, 78727, 78747, 78659, 78759, 78741, 78616, 78644, 78757, 'UnKnown', 'Unknown', 'uknown', 'Unknown ', 78729
-# ]
+zip2_unique =[
+78753, '', 78721, 78664, 78725, 78758, 78724, 78660, 78723, 78748, 78744, 78752, 78745, 78617, 78754, 78653, 78727, 78747, 78659, 78759, 78741, 78616, 78644, 78757, 'UnKnown', 'Unknown', 'uknown', 'Unknown ', 78729
+]
 
-# zip2_mode = df['ZIP2'].mode()[0]
-
-# df['ZIP2'] = (
-#     df['ZIP2']
-#     .astype(str)
-#     .str.strip()
-#     .replace({
-#         'Texas': zip2_mode,
-#         'Unhoused': zip2_mode,
-#         'UNHOUSED': zip2_mode,
-#         'UnKnown': zip2_mode,
-#         'Unknown': zip2_mode,
-#         'uknown': zip2_mode,
-#         'Unknown': zip2_mode,
-#         'NA': zip2_mode,
-#         'nan': zip2_mode,
-#         '': zip2_mode,
-#         ' ': zip2_mode,
-#     })
-# )
-
-# df['ZIP2'] = df['ZIP2'].fillna(zip2_mode)
-# df_z = df['ZIP2'].value_counts().reset_index(name='Count')
-
-# print('ZIP2 Unique After: \n', df_z['ZIP2'].unique().tolist())
-# print('ZIP2 Value Counts After: \n', df_z['ZIP2'].value_counts())
-
+# Clean and filter ZIP codes
 df['ZIP2'] = df['ZIP Code:'].astype(str).str.strip()
 
-valid_zip_mask = df['ZIP2'].str.isnumeric()
-zip2_mode = df.loc[valid_zip_mask, 'ZIP2'].mode()[0]  # still a string
-
+# Define invalid/null values to exclude
 invalid_zip_values = [
     'Texas', 'Unhoused', 'UNHOUSED', 'UnKnown', 'Unknown', 'uknown',
-    'Unknown ', 'NA', 'nan', 'NaN', 'None', '', ' '
+    'Unknown ', 'NA', 'nan', 'NaN', 'None', '5126364511', '', ' '
 ]
-df['ZIP2'] = df['ZIP2'].replace(invalid_zip_values, zip2_mode)
 
-# Step 3: Coerce to numeric, fill any remaining NaNs, then convert back to string
-df['ZIP2'] = pd.to_numeric(df['ZIP2'], errors='coerce')
-df['ZIP2'] = df['ZIP2'].fillna(int(zip2_mode)).astype(int).astype(str)
+# Filter out invalid ZIP codes - only keep numeric values
+valid_zip_mask = (
+    df['ZIP2'].str.isnumeric() & 
+    ~df['ZIP2'].isin(invalid_zip_values)
+)
 
-# Step 4: Create value count dataframe for the bar chart
-df_z = df['ZIP2'].value_counts().reset_index(name='Count')
-df_z.columns = ['ZIP2', 'Count']  # Rename columns for Plotly
+# Create filtered dataframe with only valid ZIP codes
+df_zip_filtered = df[valid_zip_mask].copy()
+
+# Create value count dataframe for the bar chart (only valid zips)
+df_z = df_zip_filtered['ZIP2'].value_counts().reset_index(name='Count')
+df_z.columns = ['ZIP2', 'Count']
 
 df_z['Percentage'] = (df_z['Count'] / df_z['Count'].sum()) * 100
 df_z['text_label'] = df_z['Count'].astype(str) + ' (' + df_z['Percentage'].round(1).astype(str) + '%)'
-# df_z['text_label'] = df_z['Percentage'].round(1).astype(str) + '%'
 
 
 zip_fig =px.bar(
@@ -1577,7 +1554,7 @@ else:
      # Fallback to a default style
     folium.TileLayer('OpenStreetMap').add_to(m)
     
-geolocator = Nominatim(user_agent="your_app_name", timeout=10)
+geolocator = Nominatim(user_agent="your_app_name", timeout=10) # type: ignore
     
 def get_coordinates(zip_code):
     for _ in range(3):  # Retry up to 3 times
@@ -1925,54 +1902,6 @@ html.Div(
             ]
         ),
         
-        # html.Div(
-        #     className='graph-row',
-        #     children=[
-        #         html.Div(
-        #             className='graph-box',
-        #             children=[
-        #                 dcc.Graph(
-        #                     className='graph',
-        #                     figure=insurance_bar
-        #                 )
-        #             ]
-        #         ),
-        #         html.Div(
-        #             className='graph-box',
-        #             children=[
-        #                 dcc.Graph(
-        #                     className='graph',
-        #                     figure=insurance_pie
-        #                 )
-        #             ]
-        #         ),
-        #     ]
-        # ),
-        
-        # html.Div(
-        #     className='graph-row',
-        #     children=[
-        #         html.Div(
-        #             className='graph-box',
-        #             children=[
-        #                 dcc.Graph(
-        #                     className='graph',
-        #                     figure=location_bar
-        #                 )
-        #             ]
-        #         ),
-        #         html.Div(
-        #             className='graph-box',
-        #             children=[
-        #                 dcc.Graph(
-        #                     className='graph',
-        #                     figure=location_pie
-        #                 )
-        #             ]
-        #         ),
-        #     ]
-        # ),
-        
         html.Div(
             className='graph-row',
             children=[
@@ -2169,7 +2098,7 @@ html.Div(
             dash_table.DataTable(
                 id='applications-table',
                 data=data,
-                columns=columns,
+                columns=columns, # type: ignore
                 page_size=10,
                 sort_action='native',
                 filter_action='native',
@@ -2194,7 +2123,7 @@ html.Div(
                     'whiteSpace': 'normal',
                     'height': 'auto',
                 },
-                style_cell_conditional=[
+                style_cell_conditional=[ # type: ignore
                     # make the index column narrow and centered
                     {'if': {'column_id': '#'},
                     'width': '20px', 'minWidth': '60px', 'maxWidth': '60px', 'textAlign': 'center'},
